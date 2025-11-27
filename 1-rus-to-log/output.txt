@@ -2,35 +2,7 @@
     {
         "literals": [
             {
-                "predicate": "Продает",
-                "args": ["x"],
-                "negated": true
-            },
-            {
-                "predicate": "Покупает",
-                "args": ["x"],
-                "negated": true
-            }
-        ]
-    },
-    {
-        "literals": [
-            {
-                "predicate": "Покупает",
-                "args": ["x"],
-                "negated": true
-            },
-            {
-                "predicate": "Дурак",
-                "args": ["x"],
-                "negated": false
-            }
-        ]
-    },
-    {
-        "literals": [
-            {
-                "predicate": "Покупает",
+                "predicate": "Инженер",
                 "args": ["a"],
                 "negated": false
             }
@@ -39,14 +11,37 @@
     {
         "literals": [
             {
-                "predicate": "Дурак",
+                "predicate": "Умен",
+                "args": ["a"],
+                "negated": false
+            }
+        ]
+    },
+    {
+        "literals": [
+            {
+                "predicate": "Умен",
+                "args": ["x"],
+                "negated": true
+            },
+            {
+                "predicate": "Богат",
+                "args": ["x"],
+                "negated": false
+            }
+        ]
+    },
+    {
+        "literals": [
+            {
+                "predicate": "Инженер",
                 "args": ["a"],
                 "negated": true
             },
             {
-                "predicate": "Продает",
+                "predicate": "Богат",
                 "args": ["a"],
-                "negated": false
+                "negated": true
             }
         ]
     }

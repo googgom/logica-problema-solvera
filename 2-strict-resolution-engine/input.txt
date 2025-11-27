@@ -1,0 +1,53 @@
+[
+    {
+        "literals": [
+            {
+                "predicate": "Продает",
+                "args": ["x"],
+                "negated": true
+            },
+            {
+                "predicate": "Покупает",
+                "args": ["x"],
+                "negated": true
+            }
+        ]
+    },
+    {
+        "literals": [
+            {
+                "predicate": "Покупает",
+                "args": ["x"],
+                "negated": true
+            },
+            {
+                "predicate": "Дурак",
+                "args": ["x"],
+                "negated": false
+            }
+        ]
+    },
+    {
+        "literals": [
+            {
+                "predicate": "Покупает",
+                "args": ["a"],
+                "negated": false
+            }
+        ]
+    },
+    {
+        "literals": [
+            {
+                "predicate": "Дурак",
+                "args": ["a"],
+                "negated": true
+            },
+            {
+                "predicate": "Продает",
+                "args": ["a"],
+                "negated": false
+            }
+        ]
+    }
+]

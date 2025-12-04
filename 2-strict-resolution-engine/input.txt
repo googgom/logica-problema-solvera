@@ -1,48 +1,72 @@
 [
-    {
-        "literals": [
-            {
-                "predicate": "Инженер",
-                "args": ["a"],
-                "negated": false
-            }
-        ]
-    },
-    {
-        "literals": [
-            {
-                "predicate": "Умен",
-                "args": ["a"],
-                "negated": false
-            }
-        ]
-    },
-    {
-        "literals": [
-            {
-                "predicate": "Умен",
-                "args": ["x"],
-                "negated": true
-            },
-            {
-                "predicate": "Богат",
-                "args": ["x"],
-                "negated": false
-            }
-        ]
-    },
-    {
-        "literals": [
-            {
-                "predicate": "Инженер",
-                "args": ["a"],
-                "negated": true
-            },
-            {
-                "predicate": "Богат",
-                "args": ["a"],
-                "negated": true
-            }
-        ]
-    }
+  {
+    "literals": [
+      {
+        "predicate": "любит",
+        "args": [
+          "x",
+          {"name": "отец", "args": [{"name": "друг", "args": ["x"]}]}
+        ],
+        "negated": true
+      },
+      {
+        "predicate": "нравится",
+        "args": ["x", "Платон"],
+        "negated": false
+      }
+    ]
+  },
+  {
+    "literals": [
+      {
+        "predicate": "=",
+        "args": [
+          {"name": "друг", "args": ["Сократ"]},
+          "Платон"
+        ],
+        "negated": false
+      }
+    ]
+  },
+  {
+    "literals": [
+      {
+        "predicate": "любит",
+        "args": [
+          "Сократ",
+          {"name": "отец", "args": [{"name": "друг", "args": ["Сократ"]}]}
+        ],
+        "negated": false
+      }
+    ]
+  },
+  {
+    "literals": [
+      {
+        "predicate": "нравится",
+        "args": ["x", "Платон"],
+        "negated": true
+      },
+      {
+        "predicate": "любит",
+        "args": [
+          "x",
+          {"name": "философия", "args": [{"name": "отец", "args": [{"name": "друг", "args": ["x"]}]}]}
+        ],
+        "negated": false
+      }
+    ]
+  },
+  {
+    "literals": [
+      {
+        "predicate": "любит",
+        "args": [
+          "Сократ",
+          {"name": "философия", "args": [{"name": "отец", "args": [{"name": "друг", "args": ["Сократ"]}]}]}
+        ],
+        "negated": true
+      }
+    ]
+  }
 ]

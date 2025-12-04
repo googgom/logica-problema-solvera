@@ -119,6 +119,12 @@ def unify_args(a1, a2, substitution, step=1, log=None):
         log.append(f"Шаг {step}: Унификация невозможна.")
         return None, log
 
+    # Применяем текущую подстановку к аргументам
+    if isinstance(a1, str) and a1 in substitution:
+        a1 = substitution[a1]
+    if isinstance(a2, str) and a2 in substitution:
+        a2 = substitution[a2]
+
     if a1 == a2:
         log.append(f"Шаг {step}: {a1} и {a2} уже унифицированы.")
         return substitution, log
@@ -127,8 +133,6 @@ def unify_args(a1, a2, substitution, step=1, log=None):
         if isinstance(a2, Term) and a2.occurs_check(a1):
             log.append(f"Шаг {step}: Циклическая подстановка: переменная {a1} входит в терм {a2}.")
             return None, log
-        if isinstance(a2, str) and a2 in substitution:
-            a2 = substitution[a2]
         log.append(f"Шаг {step}: Переменная {a1} связана с {a2}.")
         return {**substitution, a1: a2}, log
 
@@ -136,8 +140,6 @@ def unify_args(a1, a2, substitution, step=1, log=None):
         if isinstance(a1, Term) and a1.occurs_check(a2):
             log.append(f"Шаг {step}: Циклическая подстановка: переменная {a2} входит в терм {a1}.")
             return None, log
-        if isinstance(a1, str) and a1 in substitution:
-            a1 = substitution[a1]
         log.append(f"Шаг {step}: Переменная {a2} связана с {a1}.")
         return {**substitution, a2: a1}, log
 
@@ -327,7 +329,6 @@ def read_formulas():
     return [literal1, literal2]
 
 # Унификация двух формул с выводом шагов и применением подстановки
-# Унификация двух формул с выводом шагов и применением подстановки
 def unify_formulas(formulas):
     l1, l2 = formulas
     if l1.predicate != l2.predicate:
@@ -389,7 +390,6 @@ def unify_formulas(formulas):
         print("Формулы после подстановки совпадают.")
     else:
         print("Формулы после подстановки не совпадают.")
-
 
 if __name__ == "__main__":
     # Пример использования функции read_formulas

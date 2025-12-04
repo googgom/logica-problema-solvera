@@ -18,7 +18,7 @@ class Term:
     def __hash__(self):
         return hash((self.name, tuple(self.args)))
 
-    #Применение подстановки к терму
+    # Применение подстановки к терму
     def apply_substitution(self, substitution):
         if isinstance(self.name, str) and self.name in substitution:
             substituted = substitution[self.name]
@@ -28,36 +28,47 @@ class Term:
         new_args = [arg.apply_substitution(substitution) if isinstance(arg, Term) else substitution.get(arg, arg) for arg in self.args]
         return Term(self.name, new_args)
 
+    # Проверка на наличие переменной в терме
+    def occurs_check(self, var):
+        if isinstance(self.name, str) and self.name == var:
+            return True
+        for arg in self.args:
+            if isinstance(arg, Term) and arg.occurs_check(var):
+                return True
+            if arg == var:
+                return True
+        return False
+
 class Literal:
-    #Процедура создания литерала. negated - флаг отрицания
+    # Процедура создания литерала. negated - флаг отрицания
     def __init__(self, predicate, args, negated=False):
         self.predicate = predicate
         self.args = args
         self.negated = negated
 
-    #Возврат строки в читаемом виде
+    # Возврат строки в читаемом виде
     def __repr__(self):
         return ("¬" if self.negated else "") + f"{self.predicate}({', '.join(map(str, self.args))})"
 
-    #Процедура сравнения
+    # Процедура сравнения
     def __eq__(self, other):
         return (self.predicate == other.predicate and
                 self.args == other.args and
                 self.negated == other.negated)
 
-    #Хеш для встроенных структур данных
+    # Хеш для встроенных структур данных
     def __hash__(self):
         return hash((self.predicate, tuple(self.args), self.negated))
 
-    #Вернёт отрицание
+    # Вернёт отрицание
     def negate(self):
         return Literal(self.predicate, self.args, not self.negated)
 
-    #Встроенное сравнение "противоречия"
+    # Встроенное сравнение "противоречия"
     def is_negation_of(self, other):
         return self.predicate == other.predicate and self.negated != other.negated
 
-    #Применение подстановки к литералу
+    # Применение подстановки к литералу
     def apply_substitution(self, substitution):
         new_args = []
         for arg in self.args:
@@ -69,7 +80,7 @@ class Literal:
                 new_args.append(arg)#Или оставляем аргумент в изначальном виде
         return Literal(self.predicate, new_args, self.negated)
 
-    #Для JSON
+    # Для JSON
     def to_dict(self):
         return {
             "predicate": self.predicate,
@@ -81,25 +92,25 @@ class Clause:
     def __init__(self, literals):
         self.literals = literals
 
-    #Читаемый вид
+    # Читаемый вид
     def __repr__(self):
         return " ∨ ".join(map(str, self.literals))
 
-    #Сравнил быстро и мощно
+    # Сравнил быстро и мощно
     def __eq__(self, other):
         return set(self.literals) == set(other.literals)
 
-    #Хеш для std
+    # Хеш для std
     def __hash__(self):
         return hash(frozenset(self.literals))
 
-    #Для JSON
+    # Для JSON
     def to_dict(self):
         return {
             "literals": [literal.to_dict() for literal in self.literals]
         }
 
-#Унификация аргументов
+# Унификация аргументов
 def unify_args(a1, a2, substitution, step=1, log=None):
     if log is None:
         log = []
@@ -113,10 +124,20 @@ def unify_args(a1, a2, substitution, step=1, log=None):
         return substitution, log
 
     if isinstance(a1, str) and a1.islower():
+        if isinstance(a2, Term) and a2.occurs_check(a1):
+            log.append(f"Шаг {step}: Циклическая подстановка: переменная {a1} входит в терм {a2}.")
+            return None, log
+        if isinstance(a2, str) and a2 in substitution:
+            a2 = substitution[a2]
         log.append(f"Шаг {step}: Переменная {a1} связана с {a2}.")
         return {**substitution, a1: a2}, log
 
     if isinstance(a2, str) and a2.islower():
+        if isinstance(a1, Term) and a1.occurs_check(a2):
+            log.append(f"Шаг {step}: Циклическая подстановка: переменная {a2} входит в терм {a1}.")
+            return None, log
+        if isinstance(a1, str) and a1 in substitution:
+            a1 = substitution[a1]
         log.append(f"Шаг {step}: Переменная {a2} связана с {a1}.")
         return {**substitution, a2: a1}, log
 
@@ -135,50 +156,50 @@ def unify_args(a1, a2, substitution, step=1, log=None):
     log.append(f"Шаг {step}: Унификация {a1} и {a2} невозможна: несовместимые типы.")
     return None, log
 
-#Унификация литералов
+# Унификация литералов
 def unify(l1, l2, substitution):
-    #Проверка по умолчанию - смысла в ней вероятно уже нет, но и вреда тоже
+    # Проверка по умолчанию - смысла в ней вероятно уже нет, но и вреда тоже
     if substitution is None:
         return None
 
-    #Предикаты должны совпадать, а знаки отличаться
+    # Предикаты должны совпадать, а знаки отличаться
     if l1.predicate != l2.predicate or l1.negated == l2.negated:
         return None
 
-    #Аргументов должно быть поровну
+    # Аргументов должно быть поровну
     if len(l1.args) != len(l2.args):
         return None
 
-    #Если хотя бы одна пара аргументов не может быть унифицирована, то и вся унификация литералов невозможна
+    # Если хотя бы одна пара аргументов не может быть унифицирована, то и вся унификация литералов невозможна
     for a1, a2 in zip(l1.args, l2.args):
         substitution, _ = unify_args(a1, a2, substitution)
         if substitution is None:
             return None
     return substitution
 
-#Применение подстановки к литералу
+# Применение подстановки к литералу
 def apply_substitution(literal, substitution):
     return literal.apply_substitution(substitution)
 
-#Резолюция двух клауз
+# Резолюция двух клауз
 def resolve(c1, c2):
-    #Создаёт все пары из литералов
+    # Создаёт все пары из литералов
     for l1, l2 in itertools.product(c1.literals, c2.literals):
-        if l1.is_negation_of(l2):#Условие резолюции - противоположные знаки
+        if l1.is_negation_of(l2):# Условие резолюции - противоположные знаки
             substitution = unify(l1, l2, {})
-            if substitution is not None:#Ищем подстановку, что бы резольвировать
+            if substitution is not None:# Ищем подстановку, что бы резольвировать
                 new_literals = []
-                for lit in c1.literals + c2.literals:#Собираем не выбранные литералы для применения к ним подстановки
+                for lit in c1.literals + c2.literals:# Собираем не выбранные литералы для применения к ним подстановки
                     if lit != l1 and lit != l2:
                         new_literals.append(apply_substitution(lit, substitution))
-                return Clause(new_literals), substitution#Новая клауза - результат резолюции и подстановка для лога
+                return Clause(new_literals), substitution# Новая клауза - результат резолюции и подстановка для лога
     return None, None
 
-#Алгоритм резолюции
+# Алгоритм резолюции
 def resolution(clauses, max_steps=50):
     log = []
     step = 1
-    clauses = list(set(clauses)) #Убираем дубликаты клауз!
+    clauses = list(set(clauses)) # Убираем дубликаты клауз!
     for _ in range(max_steps):
         new_clauses = []
         for c1, c2 in itertools.combinations(clauses, 2):
@@ -191,22 +212,22 @@ def resolution(clauses, max_steps=50):
                     log.append(f"Шаг {step}: Унификация {substitution} в {c1} и {c2}. Резолюция -> {new_clause}.")
                     step += 1
                     new_clauses.append(new_clause)
-        if not new_clauses:#Если нет прогресса в итерации, то уже и не будет
+        if not new_clauses:# Если нет прогресса в итерации, то уже и не будет
             return False, log
         clauses += new_clauses
-    #Для возможных случаев, когда новые уникальные клаузы создаются, но решение не приближают
+    # Для возможных случаев, когда новые уникальные клаузы создаются, но решение не приближают
     print("ВНИМАНИЕ: Превышено ограничение на количество итераций резолюции.")
     print("Вероятно ответа не существует или время его нахождения слишком большое.")
     print(f"На данный момент хранится {len(clauses)} клауз.")
     print("Если хотите продолжить поиск противоречия, введите 'continue'")
     temp = input()
-    if temp == 'continue':#Если пользователь решит продолжить поиск
+    if temp == 'continue':# Если пользователь решит продолжить поиск
         proof2, log2 = resolution(clauses)
         log2 += log
         return proof2, log2
     return False, log
 
-#Чтение клауз из JSON
+# Чтение клауз из JSON
 def read_clauses(filename):
     with open(filename, "r", encoding="utf-8") as f:
         loaded_clauses_dict = json.load(f)
@@ -222,7 +243,7 @@ def read_clauses(filename):
     loaded_clauses = [dict_to_clause(clause) for clause in loaded_clauses_dict]
     return loaded_clauses
 
-#Запись лога в файл
+# Запись лога в файл
 def write_log(log, proof, filename):
     with open(filename, "w", encoding="utf-8") as f:
         f.write("Лог шагов:\n")
@@ -230,7 +251,7 @@ def write_log(log, proof, filename):
             f.write(f"{entry}\n")
         f.write(f"Противоречие найдено: {proof}\n")
 
-#Разбор терма из строки
+# Разбор терма из строки
 def parse_term(term_str):
     term_str = term_str.strip()
     if not term_str:
@@ -261,7 +282,7 @@ def parse_term(term_str):
         args.append(parse_term(''.join(current_arg).strip()))
     return Term(name, args)
 
-#Разбор литерала из строки
+# Разбор литерала из строки
 def parse_literal(literal_str):
     literal_str = literal_str.strip()
     if literal_str.startswith('¬'):
@@ -277,7 +298,7 @@ def parse_literal(literal_str):
         predicate = literal_str[:predicate_end]
         args_str = literal_str[predicate_end+1:-1]
         args = []
-        bracket_level = 0
+        bracket_level = 1 if args_str else 0
         current_arg = []
         for char in args_str:
             if char == '(':
@@ -286,7 +307,7 @@ def parse_literal(literal_str):
             elif char == ')':
                 bracket_level -= 1
                 current_arg.append(char)
-            elif char == ',' and bracket_level == 0:
+            elif char == ',' and bracket_level == 1:
                 args.append(parse_term(''.join(current_arg).strip()))
                 current_arg = []
             else:
@@ -295,7 +316,7 @@ def parse_literal(literal_str):
             args.append(parse_term(''.join(current_arg).strip()))
     return Literal(predicate, args, negated)
 
-#Чтение двух формул из консоли
+# Чтение двух формул из консоли
 def read_formulas():
     print("Введите первую формулу:")
     formula1 = input().strip()
@@ -305,7 +326,7 @@ def read_formulas():
     literal2 = parse_literal(formula2)
     return [literal1, literal2]
 
-#Унификация двух формул с выводом шагов
+# Унификация двух формул с выводом шагов и применением подстановки
 def unify_formulas(formulas):
     l1, l2 = formulas
     if l1.predicate != l2.predicate:
@@ -319,23 +340,65 @@ def unify_formulas(formulas):
     log = []
     log.append(f"Начало унификации формул: {l1} и {l2}.")
 
+    # Создаем копию подстановки для последовательного применения
+    current_substitution = substitution.copy()
+
     for i, (a1, a2) in enumerate(zip(l1.args, l2.args)):
-        substitution, log = unify_args(a1, a2, substitution, i + 1, log)
-        if substitution is None:
+        current_substitution, log = unify_args(a1, a2, current_substitution, i + 1, log)
+        if current_substitution is None:
             print("Унификация невозможна.")
             for entry in log:
                 print(entry)
             return
 
+    # Проверяем, что подстановка не содержит циклических зависимостей
+    for var, term in current_substitution.items():
+        if isinstance(term, Term) and term.occurs_check(var):
+            print("Унификация невозможна: циклическая подстановка.")
+            for entry in log:
+                print(entry)
+            return
+
+    substitution = current_substitution
     print(f"Унификация успешна. Подстановка: {substitution}")
     for entry in log:
         print(entry)
 
+    # Применение подстановки к исходным формулам
+    # Применяем подстановку последовательно, чтобы корректно заменить все переменные
+    full_substitution = substitution.copy()
+    changed = True
+    while changed:
+        changed = False
+        for var, term in list(full_substitution.items()):
+            if isinstance(term, str) and term in full_substitution:
+                full_substitution[var] = full_substitution[term]
+                changed = True
+            elif isinstance(term, Term):
+                new_term = term.apply_substitution(full_substitution)
+                if new_term != term:
+                    full_substitution[var] = new_term
+                    changed = True
+
+    print(f"Полная подстановка: {full_substitution}")
+
+    l1_substituted = l1.apply_substitution(full_substitution)
+    l2_substituted = l2.apply_substitution(full_substitution)
+    print(f"Первая формула после подстановки: {l1_substituted}")
+    print(f"Вторая формула после подстановки: {l2_substituted}")
+
+
 if __name__ == "__main__":
     # Пример использования функции read_formulas
     print("Пример унификации двух формул:")
-    formula1 = "P(f(g(f(a))), p(a, x), f(f(h(a, a, z))), g(x), f(p(ψ(c), r(x))))"
-    formula2 = "P(f(g(f(a))), p(t, q(b)), f(f(h(a, a, s(t)))), g(q(b)), f(p(y, u)))"
+    #formula1 = "P(f(g(f(a))), p(a, x), f(f(h(a, a, z))), g(x), f(p(ψ(c), r(x))))"
+    #formula2 = "P(f(g(f(a))), p(t, q(b)), f(f(h(a, a, s(t)))), g(q(b)), f(p(y, u)))"
+    #formula1 = "P(f(x), y)"
+    #formula2 = "P(x, z)"
+    formula1 = "P(x, y)"
+    formula2 = "P(f(y), x)"
+    formula1 = "P(f(a,x))"
+    formula2 = "P(g(b,y))"
     literal1 = parse_literal(formula1)
     literal2 = parse_literal(formula2)
     print(f"Первая формула: {literal1}")

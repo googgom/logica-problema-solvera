@@ -327,6 +327,7 @@ def read_formulas():
     return [literal1, literal2]
 
 # Унификация двух формул с выводом шагов и применением подстановки
+# Унификация двух формул с выводом шагов и применением подстановки
 def unify_formulas(formulas):
     l1, l2 = formulas
     if l1.predicate != l2.predicate:
@@ -340,26 +341,22 @@ def unify_formulas(formulas):
     log = []
     log.append(f"Начало унификации формул: {l1} и {l2}.")
 
-    # Создаем копию подстановки для последовательного применения
-    current_substitution = substitution.copy()
-
     for i, (a1, a2) in enumerate(zip(l1.args, l2.args)):
-        current_substitution, log = unify_args(a1, a2, current_substitution, i + 1, log)
-        if current_substitution is None:
+        substitution, log = unify_args(a1, a2, substitution, i + 1, log)
+        if substitution is None:
             print("Унификация невозможна.")
             for entry in log:
                 print(entry)
             return
 
     # Проверяем, что подстановка не содержит циклических зависимостей
-    for var, term in current_substitution.items():
+    for var, term in substitution.items():
         if isinstance(term, Term) and term.occurs_check(var):
             print("Унификация невозможна: циклическая подстановка.")
             for entry in log:
                 print(entry)
             return
 
-    substitution = current_substitution
     print(f"Унификация успешна. Подстановка: {substitution}")
     for entry in log:
         print(entry)
@@ -387,6 +384,12 @@ def unify_formulas(formulas):
     print(f"Первая формула после подстановки: {l1_substituted}")
     print(f"Вторая формула после подстановки: {l2_substituted}")
 
+    # Проверка на совпадение формул после подстановки
+    if l1_substituted == l2_substituted:
+        print("Формулы после подстановки совпадают.")
+    else:
+        print("Формулы после подстановки не совпадают.")
+
 
 if __name__ == "__main__":
     # Пример использования функции read_formulas
@@ -395,10 +398,12 @@ if __name__ == "__main__":
     #formula2 = "P(f(g(f(a))), p(t, q(b)), f(f(h(a, a, s(t)))), g(q(b)), f(p(y, u)))"
     #formula1 = "P(f(x), y)"
     #formula2 = "P(x, z)"
-    formula1 = "P(x, y)"
-    formula2 = "P(f(y), x)"
-    formula1 = "P(f(a,x))"
-    formula2 = "P(g(b,y))"
+    #formula1 = "P(x, y)"
+    #formula2 = "P(f(y), x)"
+    #formula1 = "P(f(a,x))"
+    #formula2 = "P(g(b,y))"
+    formula1 = "P(f(x), x)"
+    formula2 = "P(f(g(z)), g(y))"
     literal1 = parse_literal(formula1)
     literal2 = parse_literal(formula2)
     print(f"Первая формула: {literal1}")

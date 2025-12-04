@@ -2,16 +2,13 @@
   {
     "literals": [
       {
-        "predicate": "любит",
-        "args": [
-          "x",
-          {"name": "отец", "args": [{"name": "друг", "args": ["x"]}]}
-        ],
+        "predicate": "Животное",
+        "args": ["x"],
         "negated": true
       },
       {
-        "predicate": "нравится",
-        "args": ["x", "Платон"],
+        "predicate": "Кошка",
+        "args": ["x"],
         "negated": false
       }
     ]
@@ -19,53 +16,9 @@
   {
     "literals": [
       {
-        "predicate": "=",
-        "args": [
-          {"name": "друг", "args": ["Сократ"]},
-          "Платон"
-        ],
+        "predicate": "Кошка",
+        "args": ["Мурка"],
         "negated": false
-      }
-    ]
-  },
-  {
-    "literals": [
-      {
-        "predicate": "любит",
-        "args": [
-          "Сократ",
-          {"name": "отец", "args": [{"name": "друг", "args": ["Сократ"]}]}
-        ],
-        "negated": false
-      }
-    ]
-  },
-  {
-    "literals": [
-      {
-        "predicate": "нравится",
-        "args": ["x", "Платон"],
-        "negated": true
-      },
-      {
-        "predicate": "любит",
-        "args": [
-          "x",
-          {"name": "философия", "args": [{"name": "отец", "args": [{"name": "друг", "args": ["x"]}]}]}
-        ],
-        "negated": false
-      }
-    ]
-  },
-  {
-    "literals": [
-      {
-        "predicate": "любит",
-        "args": [
-          "Сократ",
-          {"name": "философия", "args": [{"name": "отец", "args": [{"name": "друг", "args": ["Сократ"]}]}]}
-        ],
-        "negated": true
       }
     ]
   }

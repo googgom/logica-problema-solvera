@@ -1,6 +1,29 @@
 import itertools
 import json
 
+class Term:
+    def __init__(self, name, args=None):
+        self.name = name
+        self.args = args if args is not None else []
+
+    def __repr__(self):
+        if not self.args:
+            return self.name
+        return f"{self.name}({', '.join(map(str, self.args))})"
+
+    def __eq__(self, other):
+        return isinstance(other, Term) and self.name == other.name and self.args == other.args
+
+    def __hash__(self):
+        return hash((self.name, tuple(self.args)))
+
+    def apply_substitution(self, substitution):
+        if not self.args:
+            if isinstance(self.name, str) and self.name in substitution:
+                return substitution[self.name]
+            return self
+        new_args = [arg.apply_substitution(substitution) if isinstance(arg, Term) else substitution.get(arg, arg) for arg in self.args]
+        return Term(self.name, new_args)
 
 class Literal:
     #Процедура создания литерала. negated - флаг отрицания
@@ -31,13 +54,25 @@ class Literal:
     def is_negation_of(self, other):
         return self.predicate == other.predicate and self.negated != other.negated
 
+    def apply_substitution(self, substitution):
+        new_args = []
+        for arg in self.args:
+            if isinstance(arg, Term):
+                new_args.append(arg.apply_substitution(substitution))#Или применяем подстановку(если она есть)
+            elif arg in substitution:
+                new_args.append(substitution[arg])#Или добавляем подстановку(если она есть)
+            else:
+                new_args.append(arg)#Или оставляем аргумент в изначальном виде
+        return Literal(self.predicate, new_args, self.negated)
+
     #Для JSON
     def to_dict(self):
         return {
             "predicate": self.predicate,
-            "args": self.args,
+            "args": [arg.to_dict() if isinstance(arg, Term) else arg for arg in self.args],
             "negated": self.negated
         }
+
 
 class Clause:
     def __init__(self, literals):
@@ -73,7 +108,16 @@ def unify_args(a1, a2, substitution):
         return {**substitution, a1: a2}
     if isinstance(a2, str) and a2.islower():
         return {**substitution, a2: a1}
+    if isinstance(a1, Term) and isinstance(a2, Term):
+        if a1.name != a2.name or len(a1.args) != len(a2.args):
+            return None
+        for arg1, arg2 in zip(a1.args, a2.args):
+            substitution = unify_args(arg1, arg2, substitution)
+            if substitution is None:
+                return None
+        return substitution
     return None
+
 
 def unify(l1, l2, substitution):
     #Проверка по умолчанию - смысла в ней вероятно уже нет, но и вреда тоже
@@ -94,13 +138,7 @@ def unify(l1, l2, substitution):
     return substitution
 
 def apply_substitution(literal, substitution):
-    new_args = []
-    for arg in literal.args:
-        if arg in substitution:
-            new_args.append(substitution[arg])#Или применяем подстановку(если она есть)
-        else:
-            new_args.append(arg)#Или оставляем аргумент в изначальном виде
-    return Literal(literal.predicate, new_args, literal.negated)
+    return literal.apply_substitution(substitution)
 
 def resolve(c1, c2):
     #Создаёт все пары из литералов
@@ -150,9 +188,14 @@ def read_clauses(filename):
     with open(filename, "r", encoding="utf-8") as f:
         loaded_clauses_dict = json.load(f)
 
-    # Восстанавливаем объекты
+    def dict_to_term(d):
+        if isinstance(d, dict):
+            return Term(d["name"], [dict_to_term(arg) for arg in d["args"]])
+        return d
+
     def dict_to_literal(d):
-        return Literal(d["predicate"], d["args"], d["negated"])
+        args = [dict_to_term(arg) if isinstance(arg, dict) else arg for arg in d["args"]]
+        return Literal(d["predicate"], args, d["negated"])
 
     def dict_to_clause(d):
         return Clause([dict_to_literal(literal) for literal in d["literals"]])
